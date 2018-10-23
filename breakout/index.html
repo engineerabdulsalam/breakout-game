@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Breakout</title>
+    <style>
+        body{
+            background: rgb(200, 190, 209);
+            margin: 0;
+            padding: 0;
+
+        }
+        #canvas{
+            height: 500px;
+            width: 350px;
+            border: 1px rgb(1, 8, 15) solid;
+            background-color:  rgb(128, 184, 236);
+            margin-left: 600px;
+            margin-top: 90px;
+        }
+        #startButton{
+            display: hidden;
+            padding: 10px;
+            border: 3px;
+        }
+    
+    
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+
+        var brickRowCount = 3;
+        var brickColumnCount = 5;
+        var brickWidth = 37;
+        var brickHeight = 5;
+        var brickPadding = 5;
+        var brickOffsetTop = 10;
+        var brickOffsetLeft = 45;
+
+        //this creates an empty array of bricks and creates columns and rows which are then assigned positions and a status(which indicates it is shown on the next frame)
+        var bricks = [];
+        for(var c = 0; c < brickColumnCount; c++){
+            bricks[c] = []
+            for (var r = 0; r< brickRowCount; r++){
+                bricks[c][r] = 
+                {   x: 0, 
+                    y: 0, 
+                    status: 1
+                };
+
+            }
+        }
+
+
+
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        var x = canvas.width / 2;
+        var y = canvas.height - 30;
+        var dx = 2;
+        var dy = -2;
+        var ballRadius = 2;
+        var paddleHeight = 7;
+        var paddleWidth = 50;
+        var paddlePosX = (canvas.width - paddleWidth)/ 2;
+        var paddlePosY = canvas.height - paddleHeight;
+        var rightPressed = false;
+        var leftPressed = false;
+        var score = 0;
+        var lives = 3;
+        document.addEventListener('keydown', keyDownHandler,false);
+        document.addEventListener('keyup', keyUpHandler,false);
+      
+    setInterval(moveBall, 20);
+
+
+    //this handles the keydown event on pressing left or right. When its pressed the variable rightPressed and left Pressed are false
+    function keyDownHandler(e){
+            if(e.keyCode == 39){
+                rightPressed = true;
+                
+            }
+            else if(e.keyCode == 37){
+                leftPressed = true;
+            }
+
+        }
+        //this handles the key up event on pressing left or right. When its released the variable rightPressed and left Pressed are false
+        function keyUpHandler(e){
+            if(e.keyCode == 39){
+                rightPressed = false;
+            }
+            else if(e.keyCode == 37){
+                leftPressed = false;
+            }
+
+        }
+        //this detects if there is a collision between the ball and each brick. on creation its is set at 1. the brick are stored in b.
+        //if brick has been created and the x and y pos of the ball is within the x and y of the brick then change direction and set
+        //status to 0..i.e dont show the brick on the next frame
+        function collisionDetection(){
+            for(var c = 0; c < brickColumnCount; c++){
+                for(var r = 0; r< brickRowCount; r++){
+                    var b = bricks[c][r];
+                    if(b.status == 1){
+                        if(x >= b.x && x <= b.x + brickWidth && y >= b.y && y <= b.y + brickHeight){
+                        dy = -dy;
+                        b.status = 0;
+                        score++;
+                        if(score == (brickColumnCount * brickRowCount)){
+                            winConfirmation = confirm("Youve won the game!!..Do you want to play again?");
+                            if(winConfirmation){document.location.reload();}
+                        }
+                    }
+                    }
+                    
+                }
+            }
+
+        }
+        function drawScore(){
+            ctx.font = "8px sans-serif";
+            ctx.fillStyle = 'green';
+            ctx.fillText("Score: "+ score, 8, 20)
+        }
+        function drawLives(){
+            ctx.font = "8px Arial";
+            ctx.fillStyle = 'red';
+            ctx.fillText("Lives: "+ lives, 8, 50)
+        }
+
+        //this function drawas the bricks and checks if it has been created on the next frame
+        //if it is, then create posX of each brick by setting column(from left(x)) by the width and padding and add an offset when creating the each column
+        //next create posY of each brick by setting the row(from up(y)) by the height and padding of the brick with addition to the offsetTop(create space for each y position of rows of brick)
+        //for each posX and posY of the brick at each column and row draw a brick
+        function drawBricks(){
+            for(var c = 0; c < brickColumnCount; c++){
+                for (var r = 0; r< brickRowCount; r++){
+                    if(bricks[c][r].status == 1){
+                        var brickPosX = (c*(brickWidth + brickPadding)+ brickOffsetLeft)
+                        var brickPosY = (r*(brickHeight + brickPadding)+ brickOffsetTop)
+                        bricks[c][r].x = brickPosX;
+                        bricks[c][r].y = brickPosY;
+                        ctx.beginPath();
+                        ctx.rect(brickPosX,brickPosY,brickWidth, brickHeight);
+                        ctx.fillStyle = "rgb(1, 8, 15)";
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+            }
+        }
+        }
+        //this draws the ball starting at x and y
+        function drawBall(){
+        
+            ctx.beginPath();
+            ctx.arc(x, y, ballRadius, 0, Math.PI *2);
+            ctx.fillStyle = "#fff";
+            ctx.fill();
+            ctx.closePath();
+        
+        }
+        //this draws the paddle
+        function drawPaddle(){
+            ctx.beginPath();
+            ctx.rect(paddlePosX,paddlePosY,paddleWidth, paddleHeight );
+            ctx.fillStyle = "#000";
+            ctx.fill();
+            ctx.closePath();
+        }
+        //this moves the ball
+        //it clears the frame so as not to show the previous frame then draws bricks
+        //checks if collision occurs to the brick also draws the ball and paddle at thesame time
+        //it checks if the ball hits the top of the canvas, if so change the direction on the ball downwards
+        //else if its the bottom of the canvas it hits
+        //if then the pos x of the ball hits the paddle, then move the opposite direction
+        function moveBall(){
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            drawBricks();
+            collisionDetection();
+            drawBall();
+            drawPaddle();
+            drawScore();
+            drawLives();
+            if(y+dy < ballRadius){
+                dy = -dy;
+
+            } 
+            else if(y + dy > canvas.height-ballRadius){
+                if(x > paddlePosX && x < paddlePosX + paddleWidth){
+                    dy = Math.random()+1;
+                    dy = -dy;
+                
+                }
+                else{
+                        gameOverConfirmation = confirm('Game Over!!..Do you want to try again?');
+                       if(gameOverConfirmation){ document.location.reload();}
+                       else{
+                           return document.location.href('/');
+                       }
+                    }
+                      
+                 }
+            if(x+ dx < ballRadius || x + dx > canvas.width-ballRadius){
+            dx = -dx;
+            }
+            if(rightPressed && paddlePosX < canvas.width - paddleWidth){
+                paddlePosX += 7
+            }
+            else if(leftPressed && paddlePosX > 0){
+                paddlePosX -= 7
+            }
+            x += dx;
+            y += dy;
+
+
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+*Add player lives
+*Add levels( the ball gets faster as each level is completed)
+*Add change in direction of the ball if within the left hand side of the paddle, the ball should move towards the left in that same direction 
+and if within the right hand side the paddle, the ball should move towards the right in the same direction and if the ball hits the middle, it should change direction of the ball normally 
+(dy = -dy and dx = -dx)
+*when starting a new game change direction of the ball at random(at start)
